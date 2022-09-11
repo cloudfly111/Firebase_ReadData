@@ -205,6 +205,37 @@ public class MainActivity extends AppCompatActivity {
 //            }
 //        });
 
+
+        //      1.2. return key and value (String)
+        databaseRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for(DataSnapshot d2 : snapshot.getChildren()){
+                    String datakey = d2.getKey();
+                    Format dataValue = d2.getValue(Format.class);
+                    Log.d("main","[Format.class]key="+datakey);
+                    Log.d("main","[Format.class]value_1="+dataValue.getId());
+                    Log.d("main","[Format.class]value_2="+dataValue.getValue());
+//                    [Format.class]key=0
+//                    [Format.class]value_1=a0
+//                    [Format.class]value_2=a
+//                    [Format.class]key=1
+//                    [Format.class]value_1=b1
+//                    .
+//                    .
+//                    [Format.class]key=6
+//                    [Format.class]value_1=g6
+//                    [Format.class]value_2=g
+
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
 //        2. In specific child ,return key and value (object)
 //        databaseRef.child("1").orderByKey().addValueEventListener(new ValueEventListener() {
 //            @Override
@@ -286,35 +317,7 @@ public class MainActivity extends AppCompatActivity {
 //                    [5]key=5
 //                    [6]key=6
 
-//      1.2. return key and value (String)
-        databaseRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                for(DataSnapshot d2 : snapshot.getChildren()){
-                    String datakey = d2.getKey();
-                    Format dataValue = d2.getValue(Format.class);
-                    Log.d("main","[Format.class]key="+datakey);
-                    Log.d("main","[Format.class]value_1="+dataValue.getId());
-                    Log.d("main","[Format.class]value_2="+dataValue.getValue());
-//                    [Format.class]key=0
-//                    [Format.class]value_1=a0
-//                    [Format.class]value_2=a
-//                    [Format.class]key=1
-//                    [Format.class]value_1=b1
-//                    .
-//                    .
-//                    [Format.class]key=6
-//                    [Format.class]value_1=g6
-//                    [Format.class]value_2=g
 
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
 
 
 
