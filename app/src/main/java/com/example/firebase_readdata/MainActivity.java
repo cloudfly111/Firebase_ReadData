@@ -1,13 +1,16 @@
 package com.example.firebase_readdata;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.DownloadManager;
 import android.icu.math.MathContext;
 import android.os.Bundle;
 import android.util.Log;
 
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -22,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.example.firebase_readdata.Format;
+import com.example.firebase_readdata.User;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -145,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
 //        Log.d("main","getFields="+getFields);
 //        getFields=[Ljava.lang.reflect.Field;@31945d6
 
-        Log.d("main","The length of getFields = "+databaseRef.getClass().getFields().length);
+//        Log.d("main","The length of getFields = "+databaseRef.getClass().getFields().length);
 //        The length of getFields = 0
 
 //      1. get all data in database "message"
@@ -207,34 +211,34 @@ public class MainActivity extends AppCompatActivity {
 
 
         //      1.2. return key and value (String)
-        databaseRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                for(DataSnapshot d2 : snapshot.getChildren()){
-                    String datakey = d2.getKey();
-                    Format dataValue = d2.getValue(Format.class);
-                    Log.d("main","[Format.class]key="+datakey);
-                    Log.d("main","[Format.class]value_1="+dataValue.getId());
-                    Log.d("main","[Format.class]value_2="+dataValue.getValue());
-//                    [Format.class]key=0
-//                    [Format.class]value_1=a0
-//                    [Format.class]value_2=a
-//                    [Format.class]key=1
-//                    [Format.class]value_1=b1
-//                    .
-//                    .
-//                    [Format.class]key=6
-//                    [Format.class]value_1=g6
-//                    [Format.class]value_2=g
-
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
+//        databaseRef.addValueEventListener(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(@NonNull DataSnapshot snapshot) {
+//                for(DataSnapshot d2 : snapshot.getChildren()){
+//                    String datakey = d2.getKey();
+//                    Format dataValue = d2.getValue(Format.class);
+//                    Log.d("main","[Format.class]key="+datakey);
+//                    Log.d("main","[Format.class]value_1="+dataValue.getId());
+//                    Log.d("main","[Format.class]value_2="+dataValue.getValue());
+//////                    [Format.class]key=0
+//////                    [Format.class]value_1=a0
+//////                    [Format.class]value_2=a
+//////                    [Format.class]key=1
+//////                    [Format.class]value_1=b1
+//////                    .
+//////                    .
+//////                    [Format.class]key=6
+//////                    [Format.class]value_1=g6
+//////                    [Format.class]value_2=g
+////
+//                }
+//            }
+//
+//            @Override
+//            public void onCancelled(@NonNull DatabaseError error) {
+//
+//            }
+//        });
 
 //        2. In specific child ,return key and value (object)
 //        databaseRef.child("1").orderByKey().addValueEventListener(new ValueEventListener() {
@@ -276,39 +280,35 @@ public class MainActivity extends AppCompatActivity {
 
 //     example in Firebase document--------------------------------------------------
 //       1. retun all key in the child
-        ValueEventListener messageListener = new ValueEventListener() {
-
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-
-//              取出下一階層中的所有key
-                int count = 0;
-                for(DataSnapshot d : snapshot.getChildren()){
-                    if(d.exists()){
-                        Log.d("main", "["+count+"]"+"key=" + d.getKey());
-                        count = count + 1;
-                    }
-
-                }
-
-
-
-
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        };
-
-        databaseRef.child("1").addValueEventListener(messageListener);
-//        //child1_Id = b1
-//        //child1_Value = b
-//                  output :
-//                    [0]key=id
-//                    [1]key=value
-        databaseRef.addValueEventListener(messageListener);
+//        ValueEventListener messageListener = new ValueEventListener() {
+//
+//            @Override
+//            public void onDataChange(@NonNull DataSnapshot snapshot) {
+//
+////              取出下一階層中的所有key
+//                int count = 0;
+//                for(DataSnapshot d : snapshot.getChildren()){
+//                    if(d.exists()){
+//                        Log.d("main", "["+count+"]"+"key=" + d.getKey());
+//                        count = count + 1;
+//                    }
+//
+//                }
+//            }
+//
+//            @Override
+//            public void onCancelled(@NonNull DatabaseError error) {
+//
+//            }
+//        };
+//
+//        databaseRef.child("1").addValueEventListener(messageListener);
+////        //child1_Id = b1
+////        //child1_Value = b
+////                  output :
+////                    [0]key=id
+////                    [1]key=value
+//        databaseRef.addValueEventListener(messageListener);
 //                    [0]key=0
 //                    [1]key=1
 //                    [2]key=2
@@ -316,6 +316,219 @@ public class MainActivity extends AppCompatActivity {
 //                    [4]key=4
 //                    [5]key=5
 //                    [6]key=6
+//---------------------------------------------------------------
+//      3. Query data from Firebase
+//      key = 2 的子樹
+        Query q1 = databaseRef.orderByKey().equalTo("2");
+        Log.d("main","[Query1]q1="+q1);
+        q1.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for(DataSnapshot d : snapshot.getChildren()){
+                    Log.d("main","[Query1]getvalue="+d.getValue());
+//                    output:
+                    //[Query1]getvalue={id=c2, value=c}
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
+//        key >= 2 的子樹
+        Query q2 = databaseRef.orderByKey().startAt("2");
+        q2.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for(DataSnapshot d : snapshot.getChildren()){
+                    Log.d("main","[Query2]getvalue="+d.getValue());
+//                    output:
+//                    [Query2]getvalue={id=c2, value=c}
+//                    [Query2]getvalue={id=d3, value=d}
+//                    [Query2]getvalue={id=e4, value=e}
+//                    [Query2]getvalue={id=f5, value=f}
+//                    [Query2]getvalue={id=g6, value=g}
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+//        key <= 2 的子樹
+        Query q3 = databaseRef.orderByKey().endAt("2");
+        q3.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for(DataSnapshot d : snapshot.getChildren()) {
+                    Log.d("main", "[Query3]getvalue=" + d.getValue());
+//                    output :
+//                    [Query3]getvalue={id=a0, value=a}
+//                    [Query3]getvalue={id=b1, value=b}
+//                    [Query3]getvalue={id=c2, value=c}
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+//        key > 2 的子樹
+        Query q4 = databaseRef.orderByKey().startAfter("2");
+        q4.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for(DataSnapshot d : snapshot.getChildren()) {
+                    Log.d("main", "[Query4]getvalue=" + d.getValue());
+//                    output:
+//                    [Query4]getvalue={id=d3, value=d}
+//                    [Query4]getvalue={id=e4, value=e}
+//                    [Query4]getvalue={id=f5, value=f}
+//                    [Query4]getvalue={id=g6, value=g}
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+//        key < 2 的子樹
+        Query q5 = databaseRef.orderByKey().endBefore("2");
+        q5.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for(DataSnapshot d : snapshot.getChildren()) {
+                    Log.d("main", "[Query5]getvalue=" + d.getValue());
+//                    output:
+//                    [Query5]getvalue={id=a0, value=a}
+//                    [Query5]getvalue={id=b1, value=b}
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
+//        key 介於 2 ~5 的子樹
+        Query q6 = databaseRef.orderByKey().startAt("2").endAt("5");
+        q6.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for(DataSnapshot d : snapshot.getChildren()) {
+                    Log.d("main", "[Query6]getvalue=" + d.getValue());
+//                  output:
+//                    [Query6]getvalue={id=c2, value=c}
+//                    [Query6]getvalue={id=d3, value=d}
+//                    [Query6]getvalue={id=e4, value=e}
+//                    [Query6]getvalue={id=f5, value=f}
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+//        key 小於 2 或 大於5 的子樹
+        Query q7_1 = databaseRef.orderByKey().endBefore("2");
+        Query q7_2 = databaseRef.orderByKey().startAfter("5");
+
+
+        q7_1.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for(DataSnapshot d : snapshot.getChildren()) {
+                    Log.d("main", "[Query7_1]getvalue=" + d.getValue());
+//                    output:
+//                    [Query7_1]getvalue={id=a0, value=a}
+//                    [Query7_1]getvalue={id=b1, value=b}
+
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
+        q7_2.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for(DataSnapshot d : snapshot.getChildren()) {
+                    Log.d("main", "[Query7_2]getvalue=" + d.getValue());
+//                    output:
+//                    [Query7_2]getvalue={id=g6, value=g}
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
+//      test for searching value
+        databaseRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for(DataSnapshot d : snapshot.getChildren()) {
+                    String Key = d.getKey();
+                    Query qv1 = databaseRef.child(Key).orderByValue().equalTo("c2","id");
+                    Query qv2 = databaseRef.child(Key).orderByValue().equalTo("c","value");
+
+                    qv1.addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            for(DataSnapshot d : snapshot.getChildren()) {
+                                Log.d("main", "[QuerybyValue_1]getvalue=" + d.getValue());
+//                              output:
+//                              [QuerybyValue_1]getvalue=c2
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
+
+                    qv2.addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            for(DataSnapshot d : snapshot.getChildren()) {
+                                Log.d("main", "[QuerybyValue_2]getvalue=" + d.getValue());
+//                                output:
+//                                [QuerybyValue_2]getvalue=c
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
+
+                }
+            }
+
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
+
+
+
 
 
 
