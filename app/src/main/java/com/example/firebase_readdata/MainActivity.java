@@ -9,6 +9,9 @@ import android.icu.math.MathContext;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -321,6 +324,7 @@ public class MainActivity extends AppCompatActivity {
 //      key = 2 的子樹
         Query q1 = databaseRef.orderByKey().equalTo("2");
         Log.d("main","[Query1]q1="+q1);
+//        [Query1]q1=com.google.firebase.database.Query@f400730s
         q1.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -439,8 +443,7 @@ public class MainActivity extends AppCompatActivity {
 //        key 小於 2 或 大於5 的子樹
         Query q7_1 = databaseRef.orderByKey().endBefore("2");
         Query q7_2 = databaseRef.orderByKey().startAfter("5");
-
-
+//      Method 1 : two Listener
         q7_1.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -474,6 +477,27 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+//      Method 2 : combine two query into Task
+        Task<DataSnapshot> firstTask = q7_1.get();
+        Task<DataSnapshot> secondTask = q7_2.get();
+        Task<List<Object>> combineTask = Tasks.whenAllSuccess(firstTask, secondTask);
+        combineTask.addOnSuccessListener(new OnSuccessListener<List<Object>>() {
+            @Override
+            public void onSuccess(List<Object> objects) {
+                for(Object d : objects){
+                    Log.d("main","d="+d);
+//                  output:
+//                    d=DataSnapshot { key = message, value = {0={id=a0, value=a}, 1={id=b1, value=b}} }
+//                    d=DataSnapshot { key = mssage, value = {6={id=g6, value=g}} }
+                    DataSnapshot ds = (DataSnapshot) d;
+                    Log.d("main","ds="+ds.getValue());
+
+
+                }
+            }
+        });
+
+
 
 //      test for searching value
         databaseRef.addValueEventListener(new ValueEventListener() {
@@ -507,6 +531,7 @@ public class MainActivity extends AppCompatActivity {
                                 Log.d("main", "[QuerybyValue_2]getvalue=" + d.getValue());
 //                                output:
 //                                [QuerybyValue_2]getvalue=c
+                                Log.d("main", "[QuerybyValue_2]getId=" + d.getKey());
                             }
                         }
 
