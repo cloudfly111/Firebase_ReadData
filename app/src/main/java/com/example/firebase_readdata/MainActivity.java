@@ -11,6 +11,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.SimpleAdapter;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -37,10 +39,13 @@ import com.example.firebase_readdata.User;
 
 public class MainActivity extends AppCompatActivity {
 
-    private EditText ediTextUser, editTextPwd, editTextAge, editTextBirth;
+    private EditText ediTextUser, editTextPwd, editTextEmail, editTextBirth;
     private Button buttonClear, buttonSubmit;
     private boolean searchFlag;
     private String queryKey;
+    private ListView listViewData;
+    private DatabaseReference CustomerRef;
+    private List<Map<String, String>> userData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -510,7 +515,7 @@ public class MainActivity extends AppCompatActivity {
 //      Test for delete data------------------------------------------------
 //      1. create new table "Customer"
 //      database.getReference("Customer") : get the location of Customer key.
-//        DatabaseReference CustomerRef = database.getReference("Customer");
+       CustomerRef = database.getReference("Customer");
 //        Log.d("main","database.getReference(\"Customer\")="+CustomerRef);
 //      https://fir-project-4a35d-default-rtdb.firebaseio.com/Customer/
 
@@ -536,17 +541,62 @@ public class MainActivity extends AppCompatActivity {
 //      CustomerRef.child("user").getRef() // https://fir-project-4a35d-default-rtdb.firebaseio.com/Customer/user
 
 //      Test for searching value --------------------------------------------------------------------------------
+
 //      create table "Customer" for example
-        DatabaseReference CustomerRef = database.getReference("Customer");
+//        DatabaseReference CustomerRef = database.getReference("Customer");
 //        CustomerRef.removeValue(); // delete table "Customer"
 //      get input from editText and store it into table "Customer"
         ediTextUser = (EditText) findViewById(R.id.editText_user);
         editTextPwd = (EditText) findViewById(R.id.editText_password);
-        editTextAge = (EditText) findViewById(R.id.editText_age);
+        editTextEmail = (EditText) findViewById(R.id.editText_email);
         editTextBirth = (EditText) findViewById(R.id.editText_birthday);
 //      get the button to clear or submit data
         buttonClear = (Button) findViewById(R.id.button_clear);
         buttonSubmit = (Button) findViewById(R.id.button_submit);
+
+//      listView for displaying all firebase data
+        listViewData = (ListView) findViewById(R.id.listView_id );
+        CustomerRef.addValueEventListener(new ValueEventListener() {
+            private HashMap<String, String> Mapdata;
+
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                userData = new ArrayList<Map<String, String>>();
+                for(DataSnapshot userKay:snapshot.getChildren()){
+                    Log.d("main","userKay.getValue = "+userKay.getValue());
+                    Mapdata = new HashMap<String, String>();
+                    if (userKay.exists()){
+                        Log.d("main","userKay.exists()="+userKay.exists());
+                        User userDataClass = userKay.getValue(User.class);
+                        Mapdata.put("user",userDataClass.getUser());
+                        Mapdata.put("password",userDataClass.getPassword());
+                        Mapdata.put("email",userDataClass.getEmail());
+                        Mapdata.put("birthday",userDataClass.getBirthday());
+
+                    }else{
+                        String defaultStr = "";
+                        Mapdata.put("user",defaultStr);
+                        Mapdata.put("password",defaultStr);
+                        Mapdata.put("email",defaultStr);
+                        Mapdata.put("birthday",defaultStr);
+                    }
+                    userData.add(Mapdata);
+                }
+                SimpleAdapter adapter = new SimpleAdapter(MainActivity.this, userData, R.layout.listview_layout
+                        , new String[]{"user", "password", "email", "birthday"}
+                        , new int[]{R.id.textView_list_user, R.id.textView_list_pwd, R.id.textView_list_email, R.id.textView_list_birthday});
+                adapter.notifyDataSetChanged();
+                listViewData.setAdapter(adapter);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
+
+
 
 //      buttonClear : clear the input of editText
         buttonClear.setOnClickListener(new View.OnClickListener() {
@@ -558,8 +608,8 @@ public class MainActivity extends AppCompatActivity {
                 if (editTextPwd.length() > 0) {
                     editTextPwd.setText("");
                 }
-                if (editTextAge.length() > 0) {
-                    editTextAge.setText("");
+                if (editTextEmail.length() > 0) {
+                    editTextEmail.setText("");
                 }
                 if (editTextBirth.length() > 0) {
                     editTextBirth.setText("");
@@ -571,14 +621,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (ediTextUser.length() > 0 && editTextPwd.length() > 0
-                        && editTextAge.length() > 0 && editTextBirth.length() > 0) {
+                        && editTextEmail.length() > 0 && editTextBirth.length() > 0) {
                     String user = ediTextUser.getText().toString();
                     String password = editTextPwd.getText().toString();
-                    String ageStr = editTextAge.getText().toString();
-                    long age = Long.parseLong(ageStr);
+                    String email = editTextEmail.getText().toString();
                     String birthday = editTextBirth.getText().toString();
 
-                    User data = new User(user,password,age,birthday);
+                    User data = new User(user,password,email,birthday);
 //                  method 1 :
 //                    CustomerRef.setValue(data);
 //                  method 2 :
@@ -590,171 +639,126 @@ public class MainActivity extends AppCompatActivity {
 //       create 8 user data with unique key
 
 //        List<String> idList = new ArrayList<String>();
-//       1. get the unique key of user
-         CustomerRef.orderByKey().addValueEventListener(new ValueEventListener() {
 
-             @Override
-             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                 for(DataSnapshot userData : snapshot.getChildren()){
-                     String userId = userData.getKey();
-                     searchFlag = false;
-//                     idList.add(userId);
-//                   2. using the unique key of user to access user data
-//                     指向user key
-                     DatabaseReference userRef = CustomerRef.child(userId);
-                     Log.d("main","userRef="+userRef);
-//                   userRef=https://fir-project-4a35d-default-rtdb.firebaseio.com/Customer/-NByymlMDWI1QEo9JC4G
+//        ["SELECT * FROM Customer WHERE user = "user3"]-------------------------------------------------------------
 
-//                   3. execute query like "SELECT * FROM Customer WHERE user = "user3"
+//       1. get the unique key of user(就是那一長串亂碼)
+//         CustomerRef.orderByKey().addValueEventListener(new ValueEventListener() {
 //
-                     DatabaseReference Parent = userRef.orderByValue().equalTo("user3", "user").getRef().getParent();
-                     Log.d("main","DataReference_parent="+Parent);
-//                   DataReference_parent= https://fir-project-4a35d-default-rtdb.firebaseio.com/Customer/
-                     DatabaseReference Ref = userRef.orderByValue().equalTo("user3", "user").getRef();
-                     Log.d("main","DataReference_Ref="+Ref);//取出 userRef 指向的
-//                   DataReference_Ref= https://fir-project-4a35d-default-rtdb.firebaseio.com/Customer/-NByxXSDMXe_JwLJ8l1i
-
-//------------------------------------------------------------------------------------------------------------------
-//                     3.1 [Test 1] 只抓到user:user3的節點QQ
-//                     userRef.orderByValue().equalTo("user3", "user")
+//             @Override
+//             public void onDataChange(@NonNull DataSnapshot snapshot) {
+//                 for(DataSnapshot userData : snapshot.getChildren()){
+//                     String userId = userData.getKey();
+//                     searchFlag = false;
+////                     idList.add(userId);
+////                   2. using the unique key of user to access user data
+////                     指向user key
+//                     DatabaseReference userRef = CustomerRef.child(userId);
+//                     Log.d("main","userRef="+userRef);
+////                   userRef=https://fir-project-4a35d-default-rtdb.firebaseio.com/Customer/-NByymlMDWI1QEo9JC4G
+//
+////                   3. execute query like "SELECT * FROM Customer WHERE user = "user3"
+////
+//                     DatabaseReference Parent = userRef.orderByValue().equalTo("user3", "user").getRef().getParent();
+//                     Log.d("main","DataReference_parent="+Parent);
+////                   DataReference_parent= https://fir-project-4a35d-default-rtdb.firebaseio.com/Customer/
+//                     DatabaseReference Ref = userRef.orderByValue().equalTo("user3", "user").getRef();
+//                     Log.d("main","DataReference_Ref="+Ref);//取出 userRef 指向的key的位置
+////                   DataReference_Ref= https://fir-project-4a35d-default-rtdb.firebaseio.com/Customer/-NByxXSDMXe_JwLJ8l1i
+//
+////------------------------------------------------------------------------------------------------------------------
+////                     3.1 [Test 1] 只抓到user:user3的節點QQ
+////                     userRef.orderByValue().equalTo("user3", "user")
+////                             .get().addOnSuccessListener(new OnSuccessListener<DataSnapshot>() {
+////                         @Override
+////                         public void onSuccess(DataSnapshot dataSnapshot) {
+//////                           每次由 user id 進入 user 資料的時候，DataSnapshot都會有傳回值，沒有查詢到就傳回null，否則傳回查詢結果
+//////                             Log.d("main","["+userId+"]"+"output="+dataSnapshot.getValue());
+//////                             [-NByxXSDMXe_JwLJ8l1i]output=null
+//////                             [-NByxe7aiWvow4qRTaoZ]output=null
+//////                             [-NByxl1501U_xU0lewHi]output={user=user3}
+//////                             [-NByxxKBIYAqt0drWuyx]output=null
+//////                             [-NByyA4xbF8eswxQthgd]output=null
+//////                             [-NByydYM2B1xzEx6YqqB]output=null
+//////                             [-NByymlMDWI1QEo9JC4G]output=null
+//////                             [-NByyw8isemRha_Fyhbk]output=null
+////                             if(dataSnapshot.exists()){ // when dataSnapshot is not null
+////                                 Log.d("main","useExportFormat(True)="+dataSnapshot.getValue(true));
+//////                                 useExportFormat(True)={user=user3}
+////                                 Log.d("main","useExportFormat(False)="+dataSnapshot.getValue(false));
+//////                                 useExportFormat(False)={user=user3}
+////                                 User queryOuput= dataSnapshot.getValue(User.class);
+////                                 String userAccount = queryOuput.getUser();
+////                                 String userpwd = queryOuput.getPassword();
+////                                 Long userAge = queryOuput.getAge();
+////                                 String userbirth = queryOuput.getBirthday();
+////                                 Log.d("main","userAccount="+userAccount);
+////                                 Log.d("main","userpwd="+userpwd);
+////                                 Log.d("main","userAge="+userAge);
+////                                 Log.d("main","userbirth="+userbirth);
+////
+////                                 Log.d("main","["+userId+"]"+"output="+dataSnapshot.getValue());
+////                             }
+////
+////
+////                         }
+////                     });
+////                     3.2 [Test 2] 抓到user:user3的key之後，取得此key的value，value用User.class取出資料
+//                     userRef.orderByValue().equalTo("user3","user")
 //                             .get().addOnSuccessListener(new OnSuccessListener<DataSnapshot>() {
-//                         @Override
-//                         public void onSuccess(DataSnapshot dataSnapshot) {
-////                           每次由 user id 進入 user 資料的時候，DataSnapshot都會有傳回值，沒有查詢到就傳回null，否則傳回查詢結果
-////                             Log.d("main","["+userId+"]"+"output="+dataSnapshot.getValue());
-////                             [-NByxXSDMXe_JwLJ8l1i]output=null
-////                             [-NByxe7aiWvow4qRTaoZ]output=null
-////                             [-NByxl1501U_xU0lewHi]output={user=user3}
-////                             [-NByxxKBIYAqt0drWuyx]output=null
-////                             [-NByyA4xbF8eswxQthgd]output=null
-////                             [-NByydYM2B1xzEx6YqqB]output=null
-////                             [-NByymlMDWI1QEo9JC4G]output=null
-////                             [-NByyw8isemRha_Fyhbk]output=null
-//                             if(dataSnapshot.exists()){ // when dataSnapshot is not null
-//                                 Log.d("main","useExportFormat(True)="+dataSnapshot.getValue(true));
-////                                 useExportFormat(True)={user=user3}
-//                                 Log.d("main","useExportFormat(False)="+dataSnapshot.getValue(false));
-////                                 useExportFormat(False)={user=user3}
-//                                 User queryOuput= dataSnapshot.getValue(User.class);
-//                                 String userAccount = queryOuput.getUser();
-//                                 String userpwd = queryOuput.getPassword();
-//                                 Long userAge = queryOuput.getAge();
-//                                 String userbirth = queryOuput.getBirthday();
-//                                 Log.d("main","userAccount="+userAccount);
-//                                 Log.d("main","userpwd="+userpwd);
-//                                 Log.d("main","userAge="+userAge);
-//                                 Log.d("main","userbirth="+userbirth);
+//                                 @Override
+//                                 public void onSuccess(DataSnapshot dataSnapshot) {
+//                                     if(dataSnapshot.exists()) { // 當有查詢到user:user3時(不是回傳null時)，否則dataSnapshot會傳回null
+//                                         searchFlag = true;
+//                                         Log.d("main","searchFlag="+searchFlag);
+//                                         //3.2.1 抓到user:user3的key
+//                                         queryKey = dataSnapshot.getKey();
+//                                         Log.d("main","queryKey="+queryKey);
 //
-//                                 Log.d("main","["+userId+"]"+"output="+dataSnapshot.getValue());
-//                             }
+//                                         Object queryValue = dataSnapshot.getValue();
+//                                         Log.d("main","queryValue="+queryValue);
+//
+//                                     }
+//                                 }
+//                             });//the end of userRef.orderByValue().equalTo("user3","user").get().addOnSuccessListener
+//
+//                 }
 //
 //
-//                         }
-//                     });
-//                     3.2 [Test 2] 抓到user:user3的key之後，取得此key的value，value用User.class取出資料
-                     userRef.orderByValue().equalTo("user3","user")
-                             .get().addOnSuccessListener(new OnSuccessListener<DataSnapshot>() {
-                                 @Override
-                                 public void onSuccess(DataSnapshot dataSnapshot) {
-                                     if(dataSnapshot.exists()) { // 當有查詢到user:user3時(不是回傳null時)，否則dataSnapshot會傳回null
-                                         searchFlag = true;
-                                         Log.d("main","searchFlag="+searchFlag);
-                                         //3.2.1 抓到user:user3的key
-                                         queryKey = dataSnapshot.getKey();
-                                         Log.d("main","queryKey="+queryKey);
-
-                                         Object queryValue = dataSnapshot.getValue();
-                                         Log.d("main","queryValue="+queryValue);
-
-                                     }
-                                 }
-                             });//the end of userRef.orderByValue().equalTo("user3","user").get().addOnSuccessListener
-
-                 }
-
-
-             }//the end of onDataChange
-
-             @Override
-             public void onCancelled(@NonNull DatabaseError error) {
-
-             }
-         });
+//             }//the end of onDataChange
+//
+//             @Override
+//             public void onCancelled(@NonNull DatabaseError error) {
+//
+//             }
+//         });
         // 3.2.2 取得此key的value
-        CustomerRef.child("-NByxl1501U_xU0lewHi").addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    Log.d("main","snapshot.getValue()="+snapshot.getValue());
-                    User queryOuput= snapshot.getValue(User.class);
-                    String userAccount = queryOuput.getUser(); //userAccount=user3
-                    String userpwd = queryOuput.getPassword(); //userpwd=h83649fjfk
-                    Long userAge = queryOuput.getAge();//userAge=50
-                    String userbirth = queryOuput.getBirthday();//userbirth=1976/11/10
-                    Log.d("main","userAccount="+userAccount);
-                    Log.d("main","userpwd="+userpwd);
-                    Log.d("main","userAge="+userAge);
-                    Log.d("main","userbirth="+userbirth);
-                }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError error) {
-
-                }
-            });// the end of equalTo(queryKey).addValueEventListener
-
-//----------------------------------------------------------------------------------------
-//        databaseRef.addValueEventListener(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(@NonNull DataSnapshot snapshot) {
-//                for (DataSnapshot d : snapshot.getChildren()) {
-//                    String Key = d.getKey();
-//                    Query qv1 = databaseRef.child(Key).orderByValue().equalTo("c2", "id");
-//                    Query qv2 = databaseRef.child(Key).orderByValue().equalTo("c", "value");
+//        CustomerRef.child("-NByxl1501U_xU0lewHi").addValueEventListener(new ValueEventListener() {
+//                @Override
+//                public void onDataChange(@NonNull DataSnapshot snapshot) {
+//                    Log.d("main","snapshot.getValue()="+snapshot.getValue());
+//                    User queryOuput= snapshot.getValue(User.class);
+//                    String userAccount = queryOuput.getUser(); //userAccount=user3
+//                    String userpwd = queryOuput.getPassword(); //userpwd=h83649fjfk
+//                    String userEmail = queryOuput.getEmail();//userAge=50
+//                    String userbirth = queryOuput.getBirthday();//userbirth=1976/11/10
+//                    Log.d("main","userAccount="+userAccount);
+//                    Log.d("main","userpwd="+userpwd);
+//                    Log.d("main","userEmail="+userEmail);
+//                    Log.d("main","userbirth="+userbirth);
+//                }
 //
-//                    qv1.addValueEventListener(new ValueEventListener() {
-//                        @Override
-//                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-//                            for (DataSnapshot d : snapshot.getChildren()) {
-//                                Log.d("main", "[QuerybyValue_1]getvalue=" + d.getValue());
-////                              output:
-////                              [QuerybyValue_1]getvalue=c2
-//                            }
-//                        }
-//
-//                        @Override
-//                        public void onCancelled(@NonNull DatabaseError error) {
-//
-//                        }
-//                    });
-//
-//                    qv2.addValueEventListener(new ValueEventListener() {
-//                        @Override
-//                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-//                            for (DataSnapshot d : snapshot.getChildren()) {
-//                                Log.d("main", "[QuerybyValue_2]getvalue=" + d.getValue());
-////                                output:
-////                                [QuerybyValue_2]getvalue=c
-//                                Log.d("main", "[QuerybyValue_2]getkey=" + d.getKey());
-////                              [QuerybyValue_2]getkey=value
-//                            }
-//                        }
-//
-//                        @Override
-//                        public void onCancelled(@NonNull DatabaseError error) {
-//
-//                        }
-//                    });
+//                @Override
+//                public void onCancelled(@NonNull DatabaseError error) {
 //
 //                }
-//            }
-//
-//
-//            @Override
-//            public void onCancelled(@NonNull DatabaseError error) {
-//
-//            }
-//        });
+//            });// the end of equalTo(queryKey).addValueEventListener
+//           ["SELECT * FROM Customer WHERE age >35 ]-------------------------------------------------------------
+
 
 
     }
+
+
+
 }
