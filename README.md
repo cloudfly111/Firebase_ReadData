@@ -1,8 +1,10 @@
 # Firebase_ReadData 
-建立目的 : 引用 google 官方技術文件示範如何以 Android 操作 FireBase (Real Time Database)。 
+**建立目的 : 引用 google 官方技術文件示範如何以 Android 操作 FireBase (Real Time Database)。**
 
 ## Firebase - Real Time Database 介紹
 >google 建立的即時雲端資料庫服務，以 JSON 格式儲存資料為 NoSQL 非關聯式資料庫，Android App可以透過 HTTP requests 存取 Real Time Database 資料庫內容，重點是不要存太多資料的話，即時雲端資料庫服務都是免費的。
+
+## 如何以 Android 操作 FireBase (Real Time Database)
 
 ### 1. Firebase 建立 Real Time Database 專案
 建立自己的即時雲端資料庫，多個 Android App 可以共用一個 Real Time Database 專案(資料庫)。
@@ -114,25 +116,31 @@ Log.d("main", "dataRef=" + databaseRef);//可以由Log看下你的Firebase是由
 
 ### 4. 寫入資料到 Real Time Database 
 
-[Write data - Basic write operations](https://firebase.google.com/docs/database/android/read-and-write#write_data) : 可寫入JSON格式的資料屬性。
+[Write data - Basic write operations](https://firebase.google.com/docs/database/android/read-and-write#write_data) 
 
-* String
-* Long
-* Double
-* Boolean
-* Map<String, Object>
-* List<Object>
-* Class
+<br> 基本上JSON格式資料都是 Key 和 Value 建立一組資料，類似`Map`內部元素的建立方式，，Key只能是`String`，Value可以是以下6種資料屬性和自訂類別 :
 
-以不同資料類型分類說明。
+* `String`
+* `Long`
+* `Double`
+* `Boolean`
+* `Map<String, Object>`
+* `List<Object>`
+* 自訂 `Class`
+
+以下示範如何以`String`、`Map<String, Object>`和`Class`寫入資料到FireBase。
 
 #### 4.1 字串`String`
 
 * [Connect your App to Firebase  - Write to your database](https://firebase.google.com/docs/database/android/start#write_to_your_database) : 
 Firebase版的Hello World
 
+* Key : child("message")
+
+* Value : setValue("Hello World!")
+
 ```
-databaseRef.setValue("Hello World!");
+databaseRef.child("message").setValue("Hello World!");
 //{
 //      message : Hello World!
 //}
