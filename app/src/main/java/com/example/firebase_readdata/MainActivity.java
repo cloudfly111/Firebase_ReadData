@@ -4,13 +4,21 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
 import android.app.DownloadManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Picture;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.icu.math.MathContext;
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 
@@ -27,6 +35,8 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,7 +56,11 @@ public class MainActivity extends AppCompatActivity {
     private ListView listViewData;
     private DatabaseReference CustomerRef;
     private List<Map<String, String>> userData;
+    private int count;
+    private String encodedImage;
+    private ImageView imageView;
 
+    @SuppressLint("WrongThread")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -754,6 +768,127 @@ public class MainActivity extends AppCompatActivity {
 //                }
 //            });// the end of equalTo(queryKey).addValueEventListener
 //           ["SELECT * FROM Customer WHERE age >35 ]-------------------------------------------------------------
+//          測試取得日期小於 1987-01-01 的生日和使用者id
+//        CustomerRef.orderByChild("/birthday/").endBefore("1987-01-01") :
+//        直接取得每個 birthday child location , 並以value排序，取出日期小於1987-01-01的使用者ID和所有個人資料
+            CustomerRef.orderByChild("/birthday/").endBefore("1987-01-01").addValueEventListener(new ValueEventListener() {
+                private List<User> listdata1;
+                private List<Map<String, String>> listdata2;
+
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    Log.d("main","[endBefore(\"1987-01-01\")]snapshot.getKey()="+snapshot.getKey());
+                    //Customer
+
+                    Log.d("main","[endBefore(\"1987-01-01\")]snapshot.getValue()="+snapshot.getValue());
+            //{-NC3B8P-qgRjx-OCYA_6={birthday=1971/02/06, password=1qaz@wsx, user=user2, email=user2@gmail.com},
+            // -NC3ObzZJ2IKeFWVNLV4={birthday=1986/06/01, password=abc123, user=user4, email=user4@gmail.com}}
+                    listdata1 = new ArrayList<User>();
+                    listdata2 = new ArrayList<Map<String,String>>();
+
+                    for (DataSnapshot querydata : snapshot.getChildren()){
+//                      取Value 方法1: 由class做容器蒐集，儲存在List，再由類別個別取得不同欄位資料
+                        User result=querydata.getValue(User.class);
+                        listdata1.add(result);
+//                      取Value 方法2: 取得Map存入List
+                        listdata2.add(querydata.getValue(User.class).ToMap());
+                    }
+//                  由類別個別取得不同欄位資料
+                    for(User user : listdata1){
+                        Log.d("main","[listdata1]birthday="+user.getBirthday());
+                        Log.d("main","[listdata1]password="+user.getPassword());
+                        Log.d("main","[listdata1]user="+user.getUser());
+                        Log.d("main","[listdata1]email="+user.getEmail());
+                    }
+//                  取得Map存入List
+                    Log.d("main","listdata2="+listdata2);
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+
+                }
+            });
+//           ["SELECT * FROM Customer order by birthday ]-------------------------------------------------------------
+//        1. CustomerRef.orderByChild("/birthday/") : 直接取得每個 birthday child location , 並以生日日期排序，由小到大
+            CustomerRef.orderByChild("/birthday/").addValueEventListener(new ValueEventListener() {
+                private List<Map<String, String>> list;
+
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    list = new ArrayList<Map<String,String>>();
+                    for(DataSnapshot userKey : snapshot.getChildren()){
+                        String userId = userKey.getKey(); //得到 user Key
+                        Log.d("main","userKeybirth.getValue()="+userKey.getValue());
+//                        userKeybirth.getValue()={birthday=1971/02/06, password=1qaz@wsx, user=user2, email=user2@gmail.com}
+//                        userKeybirth.getValue()={birthday=1986/06/01, password=abc123, user=user4, email=user4@gmail.com}
+//                        userKeybirth.getValue()={birthday=1987/07/14, password=123456, user=user1, email=user1@gmail.com}
+//                        userKeybirth.getValue()={birthday=1994/03/08, password=123456, user=user5, email=user5@gmail.com}
+//                        userKeybirth.getValue()={birthday=1996/11/11, password=1234561qaz, user=user3, email=user3@gmail.com}
+//                      2. 以User 物件取出排序過後的資料
+                        User orderedUserData = userKey.getValue(User.class);
+//                      3. 將物件轉型為Map，並存入List
+                        list.add(orderedUserData.ToMap());
+
+                    }
+//                  4. 以生日日期由小到大排序完的使用者資料，最外層是List，元素是Map，只能由小到大，不能由大到小
+                    Log.d("main","list="+list);
+//                    list=[{birthday=1971/02/06, password=1qaz@wsx, user=user2, email=user2@gmail.com},
+//                    {birthday=1986/06/01, password=abc123, user=user4, email=user4@gmail.com},
+//                    {birthday=1987/07/14, password=123456, user=user1, email=user1@gmail.com},
+//                    {birthday=1994/03/08, password=123456, user=user5, email=user5@gmail.com},
+//                    {birthday=1996/11/11, password=1234561qaz, user=user3, email=user3@gmail.com}]
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+
+                }
+            });
+
+
+            // convert png to base64
+            try {
+                Bitmap bm = BitmapFactory.decodeResource(getResources(), R.drawable.app_logo);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                bm.compress(Bitmap.CompressFormat.PNG, 100, baos); // bm is the bitmap object
+                byte[] b = baos.toByteArray();
+                encodedImage = Base64.encodeToString(b, Base64.DEFAULT);
+                Log.d("main","encodedImage="+encodedImage);
+            }catch (Exception e) {
+            e.printStackTrace();
+        }
+
+//        base64 picture (String) save to firebase
+        dataRef.child("picture").setValue(encodedImage);
+
+//      get base64 picture (String) from firebase and set in ImageView
+        imageView = (ImageView)findViewById(R.id.imageView);
+        dataRef.child("picture").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+//                for(DataSnapshot pic : snapshot.getChildren()){
+                    String base64Pic = (String)snapshot.getValue();
+                    Log.d("main","base64Pic="+base64Pic);
+                    byte[] decodedString = Base64.decode(base64Pic, Base64.DEFAULT);
+                    Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+//                    Drawable d = new BitmapDrawable(getResources(), decodedByte);
+                    imageView.setImageBitmap(decodedByte);
+//                }
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
+
+        // update data
+
+
+
 
 
 
