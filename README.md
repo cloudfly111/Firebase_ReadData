@@ -238,3 +238,14 @@ public class User {
       - [Read and Write Data on Android - Read data](https://firebase.google.com/docs/database/android/read-and-write#read_data) : 如何查詢資料
       - [Read and Write Data on Android - Update specific fields](https://firebase.google.com/docs/database/android/read-and-write#update_specific_fields) : 如何更新資料
       - [Read and Write Data on Android - Delete data](https://firebase.google.com/docs/database/android/read-and-write#delete_data) : 如何刪除資料
+      
+ * 設計與呈現 JSON 資料結構相關資料 :     
+   - [Learning NoSQL — NoSQL Database Designing](https://medium.com/tech-tajawal/nosql-modeling-database-structuring-part-ii-4c364c4bc17a) : 如何把SQL結構轉成NOSQL，幫助原本不會NOSQL，但是會SQL的人轉換概念，用圖示標註的很清楚。
+
+   - [Flatten data structures](https://firebase.google.com/docs/database/android/structure-data#flatten_data_structures) : 因為搜尋資料上的考量，JSON格式是不建議太多層，儘量平一點，少層一點。
+
+   - [JSON Crack - Seamlessly visualize your JSON data instantly into graphs](https://jsoncrack.com/) : 可以輕鬆把複雜的JSON結構視覺化的編輯器，方便複雜參數的整理。
+
+   
+
+ 
