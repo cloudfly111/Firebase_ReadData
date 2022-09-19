@@ -873,7 +873,7 @@ public class MainActivity extends AppCompatActivity {
                     byte[] decodedString = Base64.decode(base64Pic, Base64.DEFAULT);
                     Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
 //                    Drawable d = new BitmapDrawable(getResources(), decodedByte);
-                    imageView.setImageBitmap(decodedByte);
+//                    imageView.setImageBitmap(decodedByte);
 //                }
 
             }
@@ -885,7 +885,24 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-        // update data
+        // update data : 所有使用者的密碼更新為"123456789"
+
+        CustomerRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for(DataSnapshot d : snapshot.getChildren()){
+                    String key = (String) d.getKey();
+                    Map<String, Object> map = new HashMap<String, Object>();
+                    map.put("password","123456789");
+                    CustomerRef.child(key).updateChildren(map);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
 
 
 
